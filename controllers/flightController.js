@@ -1,8 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const pathToDb = path.join(__dirname, "../models", "/flights.json");
-
-const flights = [];
+const flightDb = require("../models/flights.json");
 
 exports.bookFlight = (req, res) => {
   const { title, time, price, date } = req.body;
@@ -13,10 +12,11 @@ exports.bookFlight = (req, res) => {
 
   const data = { id: Date.now(), ...req.body };
 
-  flights.push(data);
+  flightDb.push(data);
 
-  //const jsonData = JSON.stringify(flights);
-  fs.writeFileSync(pathToDb, flights, { flag: "a" });
+  const newDb = JSON.stringify(flightDb);
+
+  fs.writeFileSync(pathToDb, newDb);
 
   res.status(201).json(data);
 };
@@ -29,27 +29,50 @@ exports.getFlights = (req, res) => {
 
 exports.getFlight = (req, res) => {
   const { id } = req.params;
+  const flights = flightDb;
 
-  const flight = flightDb.find({ id: id });
+  const flight = flights.find((obj) => {
+    return obj.id == id;
+  });
 
   res.status(200).json(flight);
 };
 
 exports.updateFlight = (req, res) => {
   const { id } = req.params;
-  const newData = req.body;
+  const { title, price, date, time } = req.body;
 
-  const flight = flightDb.find({ id: id });
+  const flightIndex = flightDb.findIndex((obj) => {
+    return obj.id == id;
+  });
 
-  // Update flight
+  if (title) flightDb[flightIndex].title = title;
+  if (price) flightDb[flightIndex].price = price;
+  if (date) flightDb[flightIndex].date = date;
+  if (time) flightDb[flightIndex].time = time;
 
-  const updatedFlight = flightDb.find({ id: id });
+  const newDb = JSON.stringify(flightDb);
+
+  fs.writeFileSync(pathToDb, newDb);
+
+  const updatedFlight = flightDb.find((obj) => {
+    return obj.id == id;
+  });
 
   res.status(200).json(updatedFlight);
 };
 
 exports.deleteFlight = (req, res) => {
   const { id } = req.params;
+
+  const flightIndex = flightDb.findIndex((obj) => {
+    return obj.id == id;
+  });
+
+  flightDb.splice(flightIndex, 1);
+  const newDb = JSON.stringify(flightDb);
+
+  fs.writeFileSync(pathToDb, newDb);
 
   res.status(204).json({ msg: "Flight Deleted" });
 };
